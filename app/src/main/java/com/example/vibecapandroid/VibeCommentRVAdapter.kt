@@ -1,14 +1,20 @@
 package com.example.vibecapandroid
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.vibecapandroid.coms.CommentsResult
+import com.example.vibecapandroid.coms.*
 import com.example.vibecapandroid.databinding.ItemVibeCommentBinding
+import com.example.vibecapandroid.utils.getRetrofit
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 class VibeCommentRVAdapter(
     val context: Context,
@@ -18,7 +24,7 @@ class VibeCommentRVAdapter(
 
     interface MyItemClickListener {
         fun onItemClick(commentsResult: CommentsResult)
-        fun onCommentMenuClick(commentsResult: CommentsResult)
+        fun onSubCommentAddClick(position: Int)
     }
 
     private lateinit var mItemClickListener: MyItemClickListener
@@ -38,19 +44,28 @@ class VibeCommentRVAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(commentsResult[position])
+        holder.binding.itemVibeCommentSubCommentAddTv.setOnClickListener {
+            holder.binding.itemVibeCommentLayout.setBackgroundResource(R.color.purple_100)
+            mItemClickListener.onSubCommentAddClick((position)) }
+
 //        holder.itemView.setOnClickListener { mItemClickListener.onItemClick(commentsResult[position]) }
     }
 
     override fun getItemCount(): Int = commentsResult.size
 
-    inner class ViewHolder(private val binding: ItemVibeCommentBinding) :
+    inner class ViewHolder(val binding: ItemVibeCommentBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(commentsResult: CommentsResult) {
-            Glide.with(binding.root).load(commentsResult.profileImg).circleCrop()
+            Glide.with(binding.root).load(commentsResult.profileImg)
+                .placeholder(R.drawable.ic_activity_vibe_post_profile).circleCrop()
                 .into(binding.itemVibeCommentProfileImgIv)
             binding.itemVibeCommentNicknameTv.text = commentsResult.nickname
             binding.itemVibeCommentBodyTv.text = commentsResult.commentBody
-//            binding.itemVibeCommentDateTv.text = commentsResult.date // 생각해보니 서버에서 댓글 날짜 안 보냄...
+            // createdDate 설정
+            var createdDate = commentsResult.createdDate.replace("-", ". ").replace("T", ". ")
+            val dateLastIdx = createdDate.lastIndexOf(":")
+            createdDate = createdDate.removeRange(dateLastIdx, createdDate.length)
+            binding.itemVibeCommentDateTv.text = createdDate
 
             // 대댓글
             if (commentsResult.subComment.isEmpty()) {
@@ -61,15 +76,11 @@ class VibeCommentRVAdapter(
                 val vibeSubCommentRVAdapter =
                     VibeSubCommentRVAdapter(context, commentsResult.subComment)
                 binding.itemVibeSubCommentRv.adapter = vibeSubCommentRVAdapter
-
-//                vibeSubCommentRVAdapter.setMyItemClickListener(object :
-//                    VibeSubCommentRVAdapter.MyItemClickListener {
-//                    override fun onItemClick(subCommentsResult: SubCommentResult) {
-//                    }
-//
-//                })
-
             }
+
+            binding.itemVibeCommentLayout.setBackgroundResource(R.color.white)
+
+
 
             // 댓글 메뉴
             binding.itemVibeCommentMenuBtn.setOnClickListener {
@@ -83,5 +94,17 @@ class VibeCommentRVAdapter(
             }
 
         }
+
+        fun removeItem() {
+            binding.itemVibeCommentLayout.setBackgroundResource(R.color.purple_100)
+//        albumList.removeAt(position)
+//        notifyDataSetChanged()
+        }
+
     }
 }
+
+
+//interface OnItemClickValue {
+//    fun onValueChange(value: Boolean)
+//}

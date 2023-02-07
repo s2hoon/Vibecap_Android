@@ -14,14 +14,13 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
+import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.view.ViewGroup
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import com.example.vibecapandroid.WheelView.WheelView
 import com.example.vibecapandroid.WheelView.adapter.WheelAdapter
@@ -49,11 +48,26 @@ class HomeMainFragment : Fragment() {
     ): View {
         viewBinding = FragmentHomeMainBinding.inflate(layoutInflater)
 
-        viewBinding.mainAlarm.setOnClickListener{
+
+        // 상태바 설정
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)
+        val windowController = WindowInsetsControllerCompat(requireActivity().window, requireActivity().window.decorView)
+        windowController.isAppearanceLightStatusBars = false
+
+        requireActivity().window.apply {
+            requireActivity().window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            statusBarColor = Color.TRANSPARENT
+        }
+
+
+
+        viewBinding.imageButtonAlarm.setOnClickListener{
             val intent = Intent(context, MypageAlarmActivity::class.java)
             startActivity(intent)
         }
-        viewBinding.mainProfile.setOnClickListener{
+        viewBinding.imageButtonProfile.setOnClickListener{
             val intent = Intent(context, MypageProfileActivity::class.java)
             startActivity(intent)
         }
@@ -61,11 +75,9 @@ class HomeMainFragment : Fragment() {
 
 
 
-
         val vibrator = requireContext().getSystemService(VIBRATOR_SERVICE) as Vibrator
         val layout: ConstraintLayout = viewBinding.wheelMain
         layout.setBackgroundResource(R.raw.bg_img_sinna)
-
 
         
         wheelView = viewBinding.wheelview
@@ -128,17 +140,18 @@ class HomeMainFragment : Fragment() {
 
                 }
                 else if((angler>=80 && angler<120)||(angler>=-280 && angler <-240 )){
-                    layout.setBackgroundResource(R.raw.bg_img_sunsun)
-                    textView.text = "선선한"
-                    feeling = textView.text as String
-                    wheelView!!.setWheelDrawable(R.drawable.wheel_sunsun)
-                    //Log.d("angle", angle.toString())
-                }
-                else if((angler>=120 && angler<160)||(angler>=-240 && angler <-200 )){
                     layout.setBackgroundResource(R.raw.bg_img_nangman)
                     textView.text = "낭만적인"
                     feeling = textView.text as String
                     wheelView!!.setWheelDrawable(R.drawable.wheel_nangman)
+                    //Log.d("angle", angle.toString())
+                }
+                else if((angler>=120 && angler<160)||(angler>=-240 && angler <-200 )){
+
+                    layout.setBackgroundResource(R.raw.bg_img_simsim)
+                    textView.text = "심심한"
+                    feeling = textView.text as String
+                    wheelView!!.setWheelDrawable(R.drawable.wheel_simsim)
                     //Log.d("angle", angle.toString())
                 }
                 else if((angler>=160 && angler<200)||(angler>=-200 && angler <-160 )){
@@ -161,10 +174,10 @@ class HomeMainFragment : Fragment() {
                     wheelView!!.setWheelDrawable(R.drawable.wheel_gonghe)
                 }
                 else if((angler>=280 && angler<320)||(angler>=-80 && angler <-40 )){
-                    layout.setBackgroundResource(R.raw.bg_img_simsim)
-                    textView.text = "심심한"
+                    layout.setBackgroundResource(R.raw.bg_img_sunsun)
+                    textView.text = "선선한"
                     feeling = textView.text as String
-                    wheelView!!.setWheelDrawable(R.drawable.wheel_simsim)
+                    wheelView!!.setWheelDrawable(R.drawable.wheel_sunsun)
                 }
             }
 
@@ -185,9 +198,6 @@ class HomeMainFragment : Fragment() {
         /* return view*/
 
     }
-
-
-
 
 }
 

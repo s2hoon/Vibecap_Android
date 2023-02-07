@@ -9,8 +9,17 @@ import android.os.Bundle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.util.Base64
 import android.util.Log
+
+import android.view.View
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
+
+import android.widget.Toast
+
 import com.example.vibecapandroid.coms.HistoryAllResponse
 import com.example.vibecapandroid.coms.HistoryApiInterface
 import com.example.vibecapandroid.databinding.ActivityMainBinding
@@ -58,6 +67,7 @@ val retrofit: Retrofit = Retrofit.Builder()
 
 class MainActivity : AppCompatActivity() {
     val apiService=retrofit.create(HistoryApiInterface::class.java)
+    private var waitTime = 0L
     private val viewBinding: ActivityMainBinding by lazy{
         ActivityMainBinding.inflate(layoutInflater)
     }
@@ -71,20 +81,13 @@ class MainActivity : AppCompatActivity() {
                     val responseData=response.body()
                     if(response.isSuccessful){
                         if (responseData != null) {
-                            Log.d(
-                                "getHistoryAllResponse",
-                                "getHistoryAllResponse\n"+
-                                        "isSuccess:${responseData.is_success}\n " +
-                                        "Code: ${responseData.code} \n" +
-                                        "Message:${responseData.message} \n" +
-                                        "Result:${responseData.result.album}")
                             if(responseData.is_success) {
                                 if(responseData.result.album.isEmpty()) {
                                     Log.d("찍은 사진 없음","찍은 사진 없음")
                                 }
                                 else{
                                     arrayList!!.addAll(responseData.result.album.toMutableList())
-                                    Log.d("ArrayList is success 통신구문","${arrayList}")
+                                    historyMainAdapters?.notifyDataSetChanged()
                                 }
                             }
                         }
@@ -101,6 +104,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_VibecapAndroid)
 
+        // 상태바 설정
+        window.apply {
+            clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                statusBarColor = Color.TRANSPARENT
+                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            }
+        }
+
+        val windowController = WindowInsetsControllerCompat(this.window, this.window.decorView)
+        windowController.isAppearanceLightStatusBars = true
+        WindowCompat.setDecorFitsSystemWindows(this.window, true)
+
+
         var isLoggedIn=getSharedPreferences("sharedprefs", Context.MODE_PRIVATE).getBoolean("isLoggedIn",false)
         if(!isLoggedIn){
             val intent = Intent(this,LoginActivity::class.java)
@@ -114,7 +135,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("Member_ID","${MEMBER_ID}")
             setDataInList()
         }
-
+        setTheme(R.style.Theme_VibecapAndroid)
         setContentView(viewBinding.root)
         supportFragmentManager
             .beginTransaction()
@@ -127,19 +148,34 @@ class MainActivity : AppCompatActivity() {
                 when(it.itemId){
                     R.id.home_menu->{
                         supportFragmentManager
-                            .beginTransaction()
+                            .beginTransaction().setCustomAnimations(
+                                R.anim.fade_in,
+                                R.anim.fade_out,
+                                R.anim.fade_in,
+                                R.anim.fade_out
+                            )
                             .replace(viewBinding.containerFragment.id , HomeMainFragment())
                             .commitAllowingStateLoss()
                     }
                     R.id.vibe_menu->{
                         supportFragmentManager
-                            .beginTransaction()
+                            .beginTransaction().setCustomAnimations(
+                                R.anim.fade_in,
+                                R.anim.fade_out,
+                                R.anim.fade_in,
+                                R.anim.fade_out
+                            )
                             .replace(viewBinding.containerFragment.id , VibeMainFragment())
                             .commitAllowingStateLoss()
                     }
                     R.id.history_menu->{
                         supportFragmentManager
-                            .beginTransaction()
+                            .beginTransaction().setCustomAnimations(
+                                R.anim.fade_in,
+                                R.anim.fade_out,
+                                R.anim.fade_in,
+                                R.anim.fade_out
+                            )
                             .replace(viewBinding.containerFragment.id , HistoryMainFragment())
                             .commitAllowingStateLoss()
                     }
@@ -150,6 +186,30 @@ class MainActivity : AppCompatActivity() {
             selectedItemId=R.id.home_menu
         }
 
+        if(intent.extras?.getInt("frag_code")==3){
+            supportFragmentManager
+                .beginTransaction()
+                .replace(viewBinding.containerFragment.id , HistoryMainFragment())
+                .commitAllowingStateLoss()
+        }
+
+
     }
+
+    override fun onRestart() {
+        super.onRestart()
+        setDataInList()
+    }
+
+    override fun onBackPressed() {
+        if(System.currentTimeMillis() - waitTime >=1500 ) {
+            waitTime = System.currentTimeMillis()
+            Toast.makeText(this,"뒤로가기 버튼을 한번 더 누르면 종료됩니다.",Toast.LENGTH_SHORT).show()
+        } else {
+            finish() // 액티비티 종료
+        }
+    }
+
+
 
 }

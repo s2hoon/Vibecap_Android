@@ -1,9 +1,6 @@
 package com.example.vibecapandroid.coms
 
 import com.google.gson.annotations.SerializedName
-import com.google.gson.internal.bind.ArrayTypeAdapter
-import java.sql.Blob
-import java.time.LocalDateTime
 
 // 게시물 전체 조회 (태그별)
 data class PostTagResponse(
@@ -28,10 +25,10 @@ data class PostAllData(
 )
 
 data class PostContentData(
-    @SerializedName("post_id") val post_id: Int,
-    @SerializedName("member_id") val member_id: Int,
-    @SerializedName("vibe_id") val vibe_id: Int,
-    @SerializedName("vibe_image") val vibe_image: String
+    @SerializedName("post_id") val post_id: Int?,
+    @SerializedName("member_id") val member_id: Int?,
+    @SerializedName("vibe_id") val vibe_id: Int?,
+    @SerializedName("vibe_image") val vibe_image: String?
 )
 
 data class PostPageableData(
@@ -118,7 +115,7 @@ data class PostDeleteResponse(
     val is_success: Boolean,
     val code: Int,
     val message: String,
-    val result: Char
+    val result: String
 )
 
 
