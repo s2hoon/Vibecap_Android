@@ -27,6 +27,7 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
     private lateinit var setScrapView: SetScrapView
     var postId = 0
     var writerMemberId = 0
+    private var vibeId:Int?=0
 
     var postMenuBottomSheetDialog: BottomSheetDialog? = null
 
@@ -64,7 +65,7 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
             // 게시물의 post_id, 프로필 사진, 닉네임, 내용을 intent로 전달
             intent.putExtra("post_id", postId)
             val postProfileImgBitmap =
-                (binding.vibePostProfileIv.drawable as BitmapDrawable).bitmap
+                binding.vibePostProfileIv.drawable.toBitmap()
 
             intent.putExtra("post_profile_img", postProfileImgBitmap)
             intent.putExtra("post_nickname", binding.vibePostNicknameTv.text)
@@ -102,6 +103,13 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (postMenuBottomSheetDialog != null && postMenuBottomSheetDialog!!.isShowing) {
+            postMenuBottomSheetDialog!!.dismiss()
+        }
+    }
+
     override fun finish() {
         super.finish()
         overridePendingTransition(R.anim.fade_in, R.anim.slide_out)
@@ -118,7 +126,6 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                 ) {
                     Log.d("[VIBE] GET_POST/SUCCESS", response.toString())
                     val resp: PostDetailResponse = response.body()!!
-
                     // 서버 response 중 code 값에 따른 결과
                     when (resp.code) {
                         1010, 1011, 1012, 1013 -> getPostView.onGetPostSuccess(
@@ -133,7 +140,6 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     Log.d("[VIBE] GET_POST/FAILURE", t.message.toString())
                 }
             })
-        Log.d("[VIBE] GET_POST", "HELLO")
     }
 
     // 게시물 설정
@@ -157,14 +163,15 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
         if (result.tagName.isNullOrEmpty()) {
             binding.vibePostTagLayout.visibility = View.GONE
         } else {
+            Log.d("Tag set","${result.tagName}")
             // tag name 을 공백으로 구분
             val tagList = result.tagName.split(buildString {
                 append("\\s")
             }.toRegex()).toTypedArray()
+            Log.d("Tag List","${tagList}")
             // tag name 앞에 # 붙여주기
-            for (i in tagList.indices) {
-                tagList[i] = "#" + tagList[i]
-            }
+            tagList[1] = "#" + tagList[1]
+            tagList[1]=tagList[1].substring(0,tagList[1].length-1)
             // tag name 최대 6개라고 가정하고 View visibility 설정
             binding.vibePostTagLayout.visibility = View.VISIBLE
             when (tagList.size) {
@@ -238,7 +245,6 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     binding.vibePostTagFirstTv.text = tagList[5]
                 }
             }
-
         }
 
         // youtube link 설정
@@ -297,14 +303,21 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     // 서버 response 중 code 값에 따른 결과
                     when (resp.code) {
                         1000 -> {
-                            Toast.makeText(this@VibePostActivity, "게시물을 삭제하였습니다.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this@VibePostActivity,
+                                "게시물을 삭제하였습니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
 
-                            if(postMenuBottomSheetDialog!=null&&postMenuBottomSheetDialog!!.isShowing){
+                            if (postMenuBottomSheetDialog != null && postMenuBottomSheetDialog!!.isShowing) {
                                 postMenuBottomSheetDialog!!.dismiss()
                             }
                             finish()
                         }
-                        else -> Log.d("[VIBE] DELETE_POST/FAILURE", "${resp.code} / ${resp.message}")
+                        else -> Log.d(
+                            "[VIBE] DELETE_POST/FAILURE",
+                            "${resp.code} / ${resp.message}"
+                        )
                     }
                 }
 
@@ -312,14 +325,6 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     Log.d("[VIBE] DELETE_POST/FAILURE", t.message.toString())
                 }
             })
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        if(postMenuBottomSheetDialog!=null&&postMenuBottomSheetDialog!!.isShowing){
-            postMenuBottomSheetDialog!!.dismiss()
-        }
     }
 
     /*** 게시물 좋아요 ***/
@@ -348,7 +353,6 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     Log.d("[VIBE] SET_LIKE/FAILURE", t.message.toString())
                 }
             })
-        Log.d("[VIBE] SET_LIKE", "HELLO")
     }
 
     /*** 게시물 스크랩 ***/
@@ -374,7 +378,6 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     Log.d("[VIBE] SET_SCRAP/FAILURE", t.message.toString())
                 }
             })
-        Log.d("[VIBE] SET_SCRAP", "HELLO")
     }
 
     // 게시물 메뉴 BottomSheet Click event 설정
@@ -402,8 +405,9 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
             val postBlockBtn =
                 bottomSheetView.findViewById<ConstraintLayout>(R.id.bottom_sheet_vibe_post_block_layout)
             postBlockBtn.setOnClickListener {
-                val intent = Intent(this, MypagePosteditActivity::class.java)
+                val intent = Intent(this, CommonEditActivity::class.java)
                 intent.putExtra("post_id", postId)
+                intent.putExtra("vibe_id",vibeId)
                 startActivity(intent)
             }
 
@@ -514,6 +518,7 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
     override fun onGetPostSuccess(code: Int, result: PostDetailData) {
         setPost(code, result)
         writerMemberId = result.memberId
+        vibeId=result.vibeId
 
         // 게시물 메뉴 BottomSheet 설정
         val postMenuBottomSheetView =
@@ -522,7 +527,7 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
             BottomSheetDialog(this, R.style.CustomBottomSheetDialog)
 
         postMenuBottomSheetDialog!!.setContentView(postMenuBottomSheetView!!)
-        setPostBottomSheetView(postMenuBottomSheetView!!, postMenuBottomSheetDialog!!, this)
+        setPostBottomSheetView(postMenuBottomSheetView, postMenuBottomSheetDialog!!, this)
 
         binding.vibePostMenuBtn.setOnClickListener {
             postMenuBottomSheetDialog!!.show()

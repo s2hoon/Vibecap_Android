@@ -108,8 +108,10 @@ class MypageProfileActivity : AppCompatActivity() {
                         nickname.setText(responseData.result.nickname)
                         var email = findViewById<TextView>(R.id.activity_mypage_profilelist_email)
                         email.setText(responseData.result.email)
-                        Glide.with(this@MypageProfileActivity).load(responseData.result.profile_image).into(findViewById(R.id.activity_mypage_profilelist_profileimg))
-                    }
+                            Glide.with(this@MypageProfileActivity)
+                                .load(responseData.result.profile_image)
+                                .into(findViewById(R.id.activity_mypage_profilelist_profileimg))
+                        }
                     else{
                         Log.d("Retrofit","Null data") }
 
