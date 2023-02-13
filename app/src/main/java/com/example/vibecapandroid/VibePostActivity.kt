@@ -15,6 +15,9 @@ import com.example.vibecapandroid.coms.*
 import com.example.vibecapandroid.databinding.ActivityVibePostBinding
 import com.example.vibecapandroid.utils.getRetrofit
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 import retrofit2.*
 
 
@@ -125,14 +128,18 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
                     response: Response<PostDetailResponse>
                 ) {
                     Log.d("[VIBE] GET_POST/SUCCESS", response.toString())
-                    val resp: PostDetailResponse = response.body()!!
-                    // 서버 response 중 code 값에 따른 결과
-                    when (resp.code) {
-                        1010, 1011, 1012, 1013 -> getPostView.onGetPostSuccess(
-                            resp.code,
-                            resp.result
-                        )
-                        else -> getPostView.onGetPostFailure(resp.code, resp.message)
+
+                    val resp: PostDetailResponse? = response.body()
+
+                    if (resp !== null) {
+                        // 서버 response 중 code 값에 따른 결과
+                        when (resp.code) {
+                            1010, 1011, 1012, 1013 -> getPostView.onGetPostSuccess(
+                                resp.code,
+                                resp.result
+                            )
+                            else -> getPostView.onGetPostFailure(resp.code, resp.message)
+                        }
                     }
                 }
 
@@ -163,15 +170,27 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
         if (result.tagName.isNullOrEmpty()) {
             binding.vibePostTagLayout.visibility = View.GONE
         } else {
-            Log.d("Tag set","${result.tagName}")
             // tag name 을 공백으로 구분
             val tagList = result.tagName.split(buildString {
                 append("\\s")
-            }.toRegex()).toTypedArray()
-            Log.d("Tag List","${tagList}")
+            }.toRegex()).toMutableList()
+            tagList.reverse()
+
+            /*Log.d("Tag List","$tagList")*/
             // tag name 앞에 # 붙여주기
-            tagList[1] = "#" + tagList[1]
-            tagList[1]=tagList[1].substring(0,tagList[1].length-1)
+            tagList[0] = "#" + tagList[0]
+            if(tagList[0].contains("\"")) {
+                tagList[0] = tagList[0].substring(0, tagList[0].length - 1)
+            }
+            /*  Log.d("TagWoo", "$tagList")*/
+            if(tagList[1]=="" || tagList[1]==""+"#"){
+                tagList.removeAt(1)
+                Log.d("Tag","All claer")
+            }else if(!tagList[1].contains('#')){
+                tagList[1] = "#" + tagList[1]
+            }
+            /* Log.d("TagWoo2", "$tagList")
+             Log.d("TagWoo3", "${tagList.size}")*/
             // tag name 최대 6개라고 가정하고 View visibility 설정
             binding.vibePostTagLayout.visibility = View.VISIBLE
             when (tagList.size) {
@@ -251,13 +270,14 @@ class VibePostActivity : AppCompatActivity(), GetPostView, SetLikeView, SetScrap
         val beginIdx = result.youtubeLink.indexOf("watch?v=")
         val endIdx = result.youtubeLink.length
         val videoId = result.youtubeLink.substring(beginIdx + 8, endIdx)
-        val youtubePlayerFragment = YoutubePlayerFragment.newInstance()
-        val bundle = Bundle()
-        bundle.putString("VIDEO_ID", videoId)
-        youtubePlayerFragment.arguments = bundle
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.vibe_post_youtube_player_view, youtubePlayerFragment)
-            .commitNow()
+        val youTubePlayerView: YouTubePlayerView =binding.vibePostYoutubePlayerView
+        lifecycle.addObserver(youTubePlayerView)
+
+        youTubePlayerView.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+            override fun onReady(youTubePlayer: YouTubePlayer) {
+                youTubePlayer.loadVideo((videoId), 0F)
+            }
+        })
 
         binding.vibePostLikeCountTv.text = result.likeNumber.toString()
         binding.vibePostCommentCountTv.text = result.commentNumber.toString()
