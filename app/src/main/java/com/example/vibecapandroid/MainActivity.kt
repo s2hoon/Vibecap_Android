@@ -23,6 +23,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import com.bumptech.glide.Glide
 import com.example.vibecapandroid.coms.*
 
@@ -65,7 +66,7 @@ import java.time.LocalDateTime
 public lateinit var userToken:String
 public var arrayList:ArrayList<com.example.vibecapandroid.coms.HistoryMainImageClass>?=null
 public var MEMBER_ID:Long=0
-
+var setOnlyUseImageOnCapture:Boolean=false
 
 
 val retrofit: Retrofit = Retrofit.Builder()
@@ -222,6 +223,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("Member_ID","${MEMBER_ID}")
             setDataInList()
             getProfileImage()
+            setOnlyUseImageOnCapture=getSharedPreferences("sharedprefs",Context.MODE_PRIVATE).getBoolean("setImageOnly",false)
         }
         setTheme(R.style.Theme_VibecapAndroid)
         setContentView(viewBinding.root)
@@ -294,7 +296,9 @@ class MainActivity : AppCompatActivity() {
             waitTime = System.currentTimeMillis()
             Toast.makeText(this,"뒤로가기 버튼을 한번 더 누르면 종료됩니다.",Toast.LENGTH_SHORT).show()
         } else {
-            finish() // 액티비티 종료
+            //앱종료
+            ActivityCompat.finishAffinity(this)
+            System.exit(0)
         }
     }
 
